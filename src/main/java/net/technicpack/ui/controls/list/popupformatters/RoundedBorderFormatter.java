@@ -16,17 +16,25 @@
  * along with the Technic Launcher.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.technicpack.ui.controls.list;
+package net.technicpack.ui.controls.list.popupformatters;
 
-import javax.swing.*;
+import net.technicpack.ui.controls.list.popupformatters.IPopupFormatter;
+
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 
-public class SimpleScrollPopup extends BasicComboPopup {
+public class RoundedBorderFormatter implements IPopupFormatter {
+    private Border border;
 
-    public SimpleScrollPopup(JComboBox combo, Color trackColor, Color thumbColor) {
-        super(combo);
-        scroller.getVerticalScrollBar().setUI(new SimpleScrollbarUI(trackColor, thumbColor));
-        invalidate();
+    public RoundedBorderFormatter(Border border) {
+        this.border = border;
+    }
+
+    @Override
+    public void formatPopup(BasicComboPopup popup) {
+        popup.setBorder(new LineBorder(Color.white, 1));
+        popup.setBorder(border);
     }
 }

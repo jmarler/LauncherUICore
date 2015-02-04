@@ -1,6 +1,6 @@
 /*
  * This file is part of Technic UI Core.
- * Copyright (C) 2013 Syndicate, LLC
+ * Copyright ©2015 Syndicate, LLC
  *
  * Technic UI Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -19,7 +19,9 @@
 
 package net.technicpack.ui.lang;
 
+import net.technicpack.launchercore.install.LauncherDirectories;
 import net.technicpack.utilslib.Utils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import javax.imageio.ImageIO;
@@ -28,6 +30,7 @@ import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -42,15 +45,21 @@ public class ResourceLoader {
     private String slashResourcePath;
     private boolean isDefaultLocaleSupported = true;
     private Locale defaultLocale;
+    private File launcherAssets;
+    private Locale[] locales = { Locale.ENGLISH };
 
-    public static final Locale[] SUPPORTED_LOCALES = { Locale.ENGLISH, new Locale("pt","BR"), new Locale("pt","PT"), Locale.GERMAN, Locale.FRENCH, Locale.ITALIAN, Locale.CHINA, Locale.TAIWAN };
     public static final String DEFAULT_LOCALE = "default";
 
-    public static final String FONT_OPENSANS_BOLD = "font.opensans.bold";
     public static final String FONT_OPENSANS = "font.opensans.regular";
     public static final String FONT_RALEWAY = "font.raleway.light";
 
     public static final Map<String, Font> fontCache = new HashMap<String, Font>();
+
+    public static final Font fallbackFont = new Font("Arial", Font.PLAIN, 12);
+
+    public void setSupportedLanguages(Locale[] locales) {
+        this.locales = locales;
+    }
 
     public Font getFontByName(String fontName) {
         Font font;
@@ -58,25 +67,39 @@ public class ResourceLoader {
         if (fontCache.containsKey(fontName))
             return fontCache.get(fontName);
 
+        if (launcherAssets == null)
+            return fallbackFont;
+
         InputStream fontStream = null;
         try {
             String fullName = getString(fontName);
-            fontStream = ResourceLoader.class.getResourceAsStream(getResourcePath("/fonts/"+fullName));
+            fontStream = FileUtils.openInputStream(new File(launcherAssets, fullName));
+
+            if (fontStream == null)
+                return fallbackFont;
+
             font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
         } catch (Exception e) {
             e.printStackTrace();
             // Fallback
-            font = new Font("Arial", Font.PLAIN, 12);
+            return fallbackFont;
         } finally {
             if (fontStream != null)
                 IOUtils.closeQuietly(fontStream);
         }
         fontCache.put(fontName, font);
+
+        if (font == null)
+            return fallbackFont;
         
         return font;
     }
 
-    public ResourceLoader(String... resourcesPath) {
+    public ResourceLoader(LauncherDirectories directories, String... resourcesPath) {
+        if (directories == null)
+            this.launcherAssets = null;
+        else
+            this.launcherAssets = new File(directories.getAssetsDirectory(), "launcher");
         dottedResourcePath = "";
         slashResourcePath = "";
 
@@ -117,6 +140,7 @@ public class ResourceLoader {
 
     public ResourceLoader getVariant(Locale locale) {
         ResourceLoader variant = new ResourceLoader(this);
+        variant.setSupportedLanguages(locales);
         variant.setLocale(locale);
         return variant;
     }
@@ -198,8 +222,8 @@ public class ResourceLoader {
     private Locale matchClosestSupportedLocale(Locale definiteLocale) {
         Locale bestSupportedLocale = null;
         int bestLocaleScore = 0;
-        for (int i = 0; i < SUPPORTED_LOCALES.length; i++) {
-            Locale testLocale = SUPPORTED_LOCALES[i];
+        for (int i = 0; i < locales.length; i++) {
+            Locale testLocale = locales[i];
             int testScore = 0;
 
             if (testLocale.getLanguage().equals(definiteLocale.getLanguage())) {
@@ -238,6 +262,10 @@ public class ResourceLoader {
             Utils.getLogger().log(Level.SEVERE, ex.getMessage(), ex);
             return null;
         }
+    }
+
+    public InputStream getResourceAsStream(String path) {
+        return ResourceLoader.class.getResourceAsStream(getResourcePath(path));
     }
 
     public BufferedImage getCircleClippedImage(String imageName) {

@@ -1,6 +1,6 @@
 /*
  * This file is part of Technic UI Core.
- * Copyright (C) 2013 Syndicate, LLC
+ * Copyright ©2015 Syndicate, LLC
  *
  * Technic UI Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -33,8 +33,15 @@ public class LauncherDialog extends JDialog {
         super(owner, null, true);
 
         setUndecorated(true);
-        getRootPane().setBorder(new DropShadowBorder(Color.black, 4));
-        AWTUtilities.setWindowOpaque(this, false);
+
+        try {
+            AWTUtilities.setWindowOpaque(this, false);
+            getRootPane().setBorder(new DropShadowBorder(Color.black, 4));
+        } catch (IllegalArgumentException ex) {
+            //OS doesn't support translucent windows- dumb dumb dumb
+            //Eat it and just don't do the drop shadow
+        }
+
         ((JPanel)getContentPane()).setOpaque(true);
     }
 

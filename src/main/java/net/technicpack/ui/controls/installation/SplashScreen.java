@@ -1,6 +1,6 @@
 /*
  * This file is part of Technic UI Core.
- * Copyright (C) 2013 Syndicate, LLC
+ * Copyright ©2015 Syndicate, LLC
  *
  * Technic UI Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -20,6 +20,7 @@
 package net.technicpack.ui.controls.installation;
 
 import com.sun.awt.AWTUtilities;
+import net.technicpack.utilslib.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,15 +75,14 @@ public class SplashScreen extends JWindow {
         }
 
         // Finalize
-        setAlwaysOnTop(true);
         this.getRootPane().setOpaque(false);
         try {
             // Not always supported...
-            this.setBackground(new Color(0, 0, 0, 0));
             AWTUtilities.setWindowOpaque(this, false);
-
         } catch (UnsupportedOperationException e) {
             this.setBackground(new Color(0, 0, 0));
+        } catch (IllegalArgumentException ex) {
+            Utils.getLogger().warning("Your desktop environment does not support translucent windows.  Technic launcher will not look as rad for you.");
         }
     }
 
